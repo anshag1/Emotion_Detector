@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Emotion Detection</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* vertical center */
+            align-items: center;     /* horizontal center */
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        video {
+            border: 2px solid #333;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+        #result {
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 18px;
+            min-height: 28px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Emotion Detection</h1>
+    <video id="video" width="320" height="240" autoplay muted></video>
+    <p id="result">Detecting...</p>
+
+    <script>
+        const video = document.getElementById('video');
+        const result = document.getElementById('result');
+
+        // Access webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(() => {
+                result.textContent = 'Cannot access webcam.';
+            });
+
+        // Run prediction every 1 second
+        setInterval(() => {
+            if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            const dataURL = canvas.toDataURL('image/jpeg');
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: dataURL })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    result.textContent = data.error;
+                } else {
+                    result.textContent = `Emotion: ${data.emotion} (Confidence: ${(data.confidence * 100).toFixed(2)}%)`;
+                }
+            })
+            .catch(() => {
+                result.textContent = 'Error communicating with server.';
+            });
+        }, 1000); // every 1000ms (1 second)
+    </script>
+</body>
+</html>
