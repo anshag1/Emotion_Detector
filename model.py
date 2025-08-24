@@ -3,7 +3,7 @@ from tensorflow.keras.models import load_model
 import cv2
 import numpy as np
 model = load_model('best_emotion_vgg16.h5')
-emotion_labels = list(train_gen.class_indices.keys())
+emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 cap = cv2.VideoCapture(0)
 print("Press 'q' to quit.")
